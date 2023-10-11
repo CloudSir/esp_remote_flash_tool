@@ -15,19 +15,13 @@ import yaml
 import subprocess
 import sys
 
-bootloader_bin_path = ""
-main_app_bin_path = ""
-partitions_bin_path = ""
-
+# params
 baud = 961200
 chip = "esp8266"
 after_flash = "soft_reset"
+# params end
 
 def update_config():
-    global bootloader_bin_path
-    global main_app_bin_path
-    global partitions_bin_path
-    
     global baud
     global chip
     global after_flash
@@ -35,9 +29,7 @@ def update_config():
 
     with open('_config.yaml',encoding='utf-8') as file_:
         data = yaml.load(file_,Loader=yaml.FullLoader)
-        bootloader_bin_path = data["bootloader_bin_path"]
-        main_app_bin_path = data["main_app_bin_path"]
-        partitions_bin_path = data["partitions_bin_path"]
+
 
         baud = data["baud"]
         chip = data["chip"]
@@ -66,9 +58,9 @@ def get_command(ComName):
            --flash_mode dio \
            --flash_freq 40m \
            --flash_size 2MB \
-           0x0000 {bootloader_bin_path} \
-           0x10000 {main_app_bin_path}\
-           0x8000 {partitions_bin_path} \
+           0x0000  ./bin/bootloader.bin \
+           0x10000 ./bin/main_app.bin \
+           0x8000  ./bin/partitions.bin \
         """
 
 
