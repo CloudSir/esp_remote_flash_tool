@@ -1,0 +1,21 @@
+# Client config
+server_url:
+  http://192.168.3.21:9989/flash
+
+# Server cofig.
+baud:
+  961200
+chip:
+  esp8266
+after_flash:
+  soft_reset
+
+bootloader_bin_path:
+  Z:\home\cloudsir\Desktop\ESP8266_RTOS_SDK\iot_-project\build\bootloader\bootloader.bin
+main_app_bin_path:
+  Z:\home\cloudsir\Desktop\ESP8266_RTOS_SDK\iot_-project\build\uart_echo.bin
+partitions_bin_path:
+  Z:\home\cloudsir\Desktop\ESP8266_RTOS_SDK\iot_-project\build\partitions_singleapp.bin
+
+com_tool_path:
+  D:/App/DebugTool/XCOM/ATK_XCOM.exe
