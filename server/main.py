@@ -1,11 +1,12 @@
 '''
-Author: CloudSir
-@Github: https://github.com/CloudSir
-Date: 2023-10-08 21:09:13
-LastEditTime: 2023-10-08 22:14:18
-LastEditors: CloudSir
 Description: 
+Author: CloudSir
+Date: 2023-10-09 08:20:09
+Copyright: Cloudsir
+LastEditors: Cloudsir
+LastEditTime: 2023-10-11 10:04:22
 '''
+
 import os
 from flask import Flask,request
 from flask import Response
@@ -87,13 +88,36 @@ if __name__ == "__main__":
         return "Flask is running."
 
         
-    @app.route('/flash')
+    @app.route('/flash', methods=['GET', 'POST'])
     def test():
+        if(len(request.files) == 0):
+            return "No bin file posted!"
+
+        bootloader_bin_file = request.files.get('bootloader')
+        main_app_bin_file = request.files.get('main_app')
+        partitions_bin_file = request.files.get('partitions')
+
+        if bootloader_bin_file:
+            bootloader_bin_file.save(f"./bin/bootloader.bin")
+        else:
+            return "No bootloader file posted!"
+
+        if main_app_bin_file:
+            main_app_bin_file.save(f"./bin/main_app.bin")
+        else:
+            return "No main_app file posted!"
+            
+        if partitions_bin_file:
+            partitions_bin_file.save(f"./bin/partitions.bin")
+        else:
+            return "No partitions file posted!"
+            
         def generate():
             # 拼接命令
             com_num = get_last_portName()
             if (com_num == "null"):
-                yield "\nCOM is Null"
+                yield "\nCOM is Null\n"
+                return
 
             command_str = get_command(com_num)
             print(command_str)
@@ -118,5 +142,5 @@ if __name__ == "__main__":
 
         return Response(generate(), mimetype='text/plain')
 
-    app.run(debug=True, port=9989, host="0.0.0.0")
+    app.run(debug=True, port=9969, host="0.0.0.0")
 
