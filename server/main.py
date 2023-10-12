@@ -28,7 +28,7 @@ def update_config():
     global after_flash
     global com_tool_path
 
-    with open('_config.yaml',encoding='utf-8') as file_:
+    with open('server_config.yaml',encoding='utf-8') as file_:
         data = yaml.load(file_,Loader=yaml.FullLoader)
 
 
