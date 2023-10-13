@@ -4,7 +4,7 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-10-11 10:04:22
+LastEditTime: 2023-10-13 11:59:21
 '''
 
 import os
@@ -31,7 +31,6 @@ def update_config():
     with open('server_config.yaml',encoding='utf-8') as file_:
         data = yaml.load(file_,Loader=yaml.FullLoader)
 
-
         baud = data["baud"]
         chip = data["chip"]
         after_flash = data["after_flash"]
@@ -47,7 +46,7 @@ def get_last_portName():
     else:
         return list(port_list[-1]) [0]
 
-def get_command(ComName):
+def get_command(ComName, ota_data_initial):
     update_config()
     return f"""python ./esptool/esptool.py \
            --chip {chip} \
@@ -62,6 +61,7 @@ def get_command(ComName):
            0x0000  ./bin/bootloader.bin \
            0x10000 ./bin/main_app.bin \
            0x8000  ./bin/partitions.bin \
+           {"0xd000  ./bin/ota_data_initial.bin" if ota_data_initial else ""} \
         """
 
 
@@ -97,6 +97,11 @@ if __name__ == "__main__":
         main_app_bin_file = request.files.get('main_app')
         partitions_bin_file = request.files.get('partitions')
 
+        ota_data_initial = request.files.get('ota_data_initial')
+
+        if ota_data_initial:
+            ota_data_initial.save(f"./bin/ota_data_initial.bin")
+        
         if bootloader_bin_file:
             bootloader_bin_file.save(f"./bin/bootloader.bin")
         else:
@@ -119,7 +124,7 @@ if __name__ == "__main__":
                 yield "\nCOM is Null\n"
                 return
 
-            command_str = get_command(com_num)
+            command_str = get_command(com_num, ota_data_initial)
             print(command_str)
 
             # 执行外部命令

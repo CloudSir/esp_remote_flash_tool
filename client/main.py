@@ -4,7 +4,7 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-10-13 10:36:27
+LastEditTime: 2023-10-13 12:07:40
 '''
 import requests
 import yaml
@@ -32,9 +32,11 @@ def main():
         
         data = yaml.load(file_,Loader=yaml.FullLoader)
 
-        bootloader_bin_path = data["bootloader_bin_path"]
-        main_app_bin_path = data["main_app_bin_path"]
-        partitions_bin_path = data["partitions_bin_path"]
+        bootloader_bin_path = data.get("bootloader_bin_path")
+        main_app_bin_path = data.get("main_app_bin_path")
+        partitions_bin_path = data.get("partitions_bin_path")
+
+        ota_data_initial_path = data.get("ota_data_initial_path")
 
         if not os.path.exists(bootloader_bin_path):
             print("bootloader.bin is not exist, please check config in 'client_config.yaml'.")
@@ -53,6 +55,9 @@ def main():
             'main_app':   open(main_app_bin_path,'rb'),
             'partitions': open(partitions_bin_path,'rb')
         }
+
+        if ota_data_initial_path and os.path.exists(ota_data_initial_path):
+            files["ota_data_initial"] = open(ota_data_initial_path,'rb')
 
         try:
             requests.get(data["server_url"] + "/", timeout=3)

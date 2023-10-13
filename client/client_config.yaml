@@ -8,3 +8,6 @@ main_app_bin_path:
   /home/cloudsir/Desktop/ESP8266_RTOS_SDK/iot_-project/build/uart_echo.bin
 partitions_bin_path:
   /home/cloudsir/Desktop/ESP8266_RTOS_SDK/iot_-project/build/partitions_singleapp.bin
+
+# ota_data_initial_path:
+#   /home/cloudsir/Desktop/ESP8266_RTOS_SDK/iot_-project/build/ota_data_initial.bin
