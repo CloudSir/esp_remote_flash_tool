@@ -4,19 +4,31 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-10-12 08:58:15
+LastEditTime: 2023-10-13 10:36:27
 '''
 import requests
 import yaml
 import os
 
+import argparse  
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('config', type=str, help='config file path')
+
+args = parser.parse_args()  # 获取所有参数
+
 
 def main():
-    current_path = os.path.dirname(os.path.abspath(__file__))
+    config_path = ""
+    if(args.config):
+        config_path = args.config
+    else:
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(current_path) # 设置工作目录
+        config_path = "./client_config.yaml"
 
-    os.chdir(current_path) # 设置工作目录
-
-    with open('./client_config.yaml',encoding='utf-8') as file_:
+    with open(config_path, encoding='utf-8') as file_:
         
         data = yaml.load(file_,Loader=yaml.FullLoader)
 
