@@ -4,11 +4,12 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-10-13 12:07:40
+LastEditTime: 2023-10-16 15:17:19
 '''
 import requests
 import yaml
 import os
+from termcolor import colored
 
 import argparse  
 
@@ -18,6 +19,9 @@ parser.add_argument('config', type=str, help='config file path')
 
 args = parser.parse_args()  # 获取所有参数
 
+
+def print_err(msg):
+    print(colored(msg, "red"))
 
 def main():
     config_path = ""
@@ -39,15 +43,15 @@ def main():
         ota_data_initial_path = data.get("ota_data_initial_path")
 
         if not os.path.exists(bootloader_bin_path):
-            print("bootloader.bin is not exist, please check config in 'client_config.yaml'.")
+            print_err("bootloader.bin is not exist, please check config in 'client_config.yaml'.")
             return
 
         if not os.path.exists(main_app_bin_path):
-            print("main_app.bin is not exist, please check config in 'client_config.yaml'.")
+            print_err("main_app.bin is not exist, please check config in 'client_config.yaml'.")
             return
 
         if not os.path.exists(bootloader_bin_path):
-            print("partitions.bin is not exist, please check config in 'client_config.yaml'.")
+            print_err("partitions.bin is not exist, please check config in 'client_config.yaml'.")
             return
 
         files = {
@@ -62,7 +66,7 @@ def main():
         try:
             requests.get(data["server_url"] + "/", timeout=3)
         except:
-            print("Server is not running!")
+            print_err("Server is not running!")
             return
 
         re = requests.post(data["server_url"] + "/flash", stream=True, files=files)

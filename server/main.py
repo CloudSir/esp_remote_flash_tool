@@ -4,7 +4,7 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-10-13 11:59:21
+LastEditTime: 2023-10-16 15:21:04
 '''
 
 import os
@@ -16,11 +16,20 @@ import yaml
 import subprocess
 import sys
 
+from termcolor import colored
+
 # params
 baud = 961200
 chip = "esp8266"
 after_flash = "soft_reset"
 # params end
+
+
+def err_msg(msg):
+    return colored(msg, "red")
+
+def success_msg(msg):
+    return colored(msg, "green")
 
 def update_config():
     global baud
@@ -41,7 +50,7 @@ def get_last_portName():
     port_list = list(list_ports.comports())
     num = len(port_list)
     if num <= 0:
-        print("COM is Null!!!")
+        print(err_msg("COM is Null!!!"))
         return "null"
     else:
         return list(port_list[-1]) [0]
@@ -91,7 +100,7 @@ if __name__ == "__main__":
     @app.route('/flash', methods=['GET', 'POST'])
     def test():
         if(len(request.files) == 0):
-            return "No bin file posted!"
+            return err_msg("No bin file posted!")
 
         bootloader_bin_file = request.files.get('bootloader')
         main_app_bin_file = request.files.get('main_app')
@@ -105,23 +114,23 @@ if __name__ == "__main__":
         if bootloader_bin_file:
             bootloader_bin_file.save(f"./bin/bootloader.bin")
         else:
-            return "No bootloader file posted!"
+            return err_msg("No bootloader file posted!")
 
         if main_app_bin_file:
             main_app_bin_file.save(f"./bin/main_app.bin")
         else:
-            return "No main_app file posted!"
+            return err_msg("No main_app file posted!")
             
         if partitions_bin_file:
             partitions_bin_file.save(f"./bin/partitions.bin")
         else:
-            return "No partitions file posted!"
+            return err_msg("No partitions file posted!")
             
         def generate():
             # 拼接命令
             com_num = get_last_portName()
             if (com_num == "null"):
-                yield "\nCOM is Null\n"
+                yield err_msg("\nCOM is Null\n")
                 return
 
             command_str = get_command(com_num, ota_data_initial)
@@ -137,8 +146,8 @@ if __name__ == "__main__":
                 yield tmp_line
                 sys.stdout.flush()
             
-            print("write flash OK, open COM_TOOL...")
-            yield "write flash OK, open COM_TOOL...\n"
+            print(success_msg("write flash OK, open COM_TOOL..."))
+            yield success_msg("write flash OK, open COM_TOOL...\n")
 
             os.system(f"\"{com_tool_path}\"")
             print("Finish.")
