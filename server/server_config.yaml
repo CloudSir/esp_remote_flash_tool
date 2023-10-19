@@ -4,6 +4,3 @@ chip:
   esp8266
 after_flash:
   soft_reset
-
-com_tool_path:
-  D:/App/DebugTool/XCOM/ATK_XCOM.exe

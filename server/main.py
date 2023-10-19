@@ -4,7 +4,7 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-10-16 15:21:04
+LastEditTime: 2023-10-19 10:24:56
 '''
 
 import os
@@ -35,7 +35,6 @@ def update_config():
     global baud
     global chip
     global after_flash
-    global com_tool_path
 
     with open('server_config.yaml',encoding='utf-8') as file_:
         data = yaml.load(file_,Loader=yaml.FullLoader)
@@ -43,7 +42,6 @@ def update_config():
         baud = data["baud"]
         chip = data["chip"]
         after_flash = data["after_flash"]
-        com_tool_path = data["com_tool_path"]
 
 
 def get_last_portName():
@@ -84,7 +82,6 @@ if __name__ == "__main__":
         print(command_str)
         os.system(command_str)
 
-        os.system(f"\"{com_tool_path}\"")
         return "OK"
 
     @app.route("/clear")
@@ -149,7 +146,6 @@ if __name__ == "__main__":
             print(success_msg("write flash OK, open COM_TOOL..."))
             yield success_msg("write flash OK, open COM_TOOL...\n")
 
-            os.system(f"\"{com_tool_path}\"")
             print("Finish.")
             yield "Finish.\n"
             print("---------------------------------------------------\n")
