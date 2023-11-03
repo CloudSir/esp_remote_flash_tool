@@ -4,7 +4,7 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-11-03 09:51:27
+LastEditTime: 2023-11-03 09:58:10
 '''
 import requests
 import yaml
@@ -29,10 +29,10 @@ def main():
     config_path = ""
     if(args.config):
         config_path = args.config
-    else:
+    else:  # 使用默认配置文件
         current_path = os.path.dirname(os.path.abspath(__file__))
-        os.chdir(current_path) # 设置工作目录
-        config_path = "./client_config.yaml"
+        os.chdir(current_path) # 设置工作目录为当前程序文件所在目录
+        config_path = "./config.yaml" 
 
     with open(config_path, encoding='utf-8') as file_:
         

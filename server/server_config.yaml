@@ -1,6 +1,0 @@
-baud:
-  961200
-chip:
-  esp8266
-after_flash:
-  soft_reset
