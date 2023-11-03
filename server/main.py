@@ -4,58 +4,10 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-10-19 10:24:56
+LastEditTime: 2023-11-03 09:54:02
 '''
 
-import os
-from flask import Flask,request
-from flask import Response
-from serial.tools import list_ports
-import yaml
-
-import subprocess
-import sys
-
-from termcolor import colored
-
-# params
-baud = 961200
-chip = "esp8266"
-after_flash = "soft_reset"
-# params end
-
-
-def err_msg(msg):
-    return colored(msg, "red")
-
-def success_msg(msg):
-    return colored(msg, "green")
-
-def update_config():
-    global baud
-    global chip
-    global after_flash
-
-    with open('server_config.yaml',encoding='utf-8') as file_:
-        data = yaml.load(file_,Loader=yaml.FullLoader)
-
-        baud = data["baud"]
-        chip = data["chip"]
-        after_flash = data["after_flash"]
-
-
-def get_last_portName():
-    port_list = list(list_ports.comports())
-    num = len(port_list)
-    if num <= 0:
-        print(err_msg("COM is Null!!!"))
-        return "null"
-    else:
-        return list(port_list[-1]) [0]
-
-def get_command(ComName, ota_data_initial):
-    update_config()
-    return f"""python ./esptool/esptool.py \
+"""python ./esptool/esptool.py \
            --chip {chip} \
            --port {ComName} \
            --baud 921600 \
@@ -67,22 +19,36 @@ def get_command(ComName, ota_data_initial):
            --flash_size 2MB \
            0x0000  ./bin/bootloader.bin \
            0x10000 ./bin/main_app.bin \
-           0x8000  ./bin/partitions.bin \
-           {"0xd000  ./bin/ota_data_initial.bin" if ota_data_initial else ""} \
-        """
+           0x8000  ./bin/partitions.bin \ 
+"""
 
+import os
+from flask import Flask,request
+from flask import Response
+from serial.tools import list_ports
+
+import subprocess
+import sys
+
+from termcolor import colored
+
+import argparse  
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--port', type=int, required=False, default=9969, help='htpp server port')
+
+args = parser.parse_args()  # 获取所有参数
+
+def err_msg(msg):
+    return colored(msg, "red")
+
+def success_msg(msg):
+    return colored(msg, "green")
 
 if __name__ == "__main__":
 
     app = Flask('app')
-
-    @app.route('/flash_old_interface')
-    def main():
-        command_str = get_command(get_last_portName())
-        print(command_str)
-        os.system(command_str)
-
-        return "OK"
 
     @app.route("/clear")
     def clear():
@@ -93,44 +59,68 @@ if __name__ == "__main__":
     def root():
         return "Flask is running."
 
-        
     @app.route('/flash', methods=['GET', 'POST'])
-    def test():
+    def flash():
         if(len(request.files) == 0):
             return err_msg("No bin file posted!")
-
-        bootloader_bin_file = request.files.get('bootloader')
-        main_app_bin_file = request.files.get('main_app')
-        partitions_bin_file = request.files.get('partitions')
-
-        ota_data_initial = request.files.get('ota_data_initial')
-
-        if ota_data_initial:
-            ota_data_initial.save(f"./bin/ota_data_initial.bin")
         
-        if bootloader_bin_file:
-            bootloader_bin_file.save(f"./bin/bootloader.bin")
-        else:
-            return err_msg("No bootloader file posted!")
+        prefix_cmd = "python ./esptool/esptool.py  "
+        suffix_cmd = "  write_flash -z  "
+        firmware_bin_cmd = ""
 
-        if main_app_bin_file:
-            main_app_bin_file.save(f"./bin/main_app.bin")
-        else:
-            return err_msg("No main_app file posted!")
-            
-        if partitions_bin_file:
-            partitions_bin_file.save(f"./bin/partitions.bin")
-        else:
-            return err_msg("No partitions file posted!")
-            
+        for item_name in request.files:
+
+            if item_name == "basic_options":
+                prefix_cmd += request.files.get(item_name).read().decode("utf-8")
+                continue
+
+            if item_name == "flash_options":
+                suffix_cmd += request.files.get(item_name).read().decode("utf-8")
+                continue
+
+            if item_name == "com_port":
+                com_port = request.files.get(item_name).read().decode("utf-8")
+                port_list = list(list_ports.comports())
+
+                # 如果是自动选择COM
+                if com_port == "auto":
+                    num = len(port_list)
+                    if num <= 0:
+                        msg = err_msg("COM is Null!!!")
+                        print(msg)
+                        return msg
+                    elif num > 1:
+                        msg = err_msg("You have connected more than one COM ports, please set a COM port!!!")
+                        print(msg)
+                        return msg
+                    
+                    com_port = list(port_list[-1]) [0]
+                
+                else:  # 手动选择的COM
+                    
+                    port_name_list = []
+                    for port_name in port_list:
+                        port_name_list.append(port_name[0])
+
+                    # 检查选择的是否存在COM
+                    if com_port not in port_name_list:
+                        msg = err_msg(f"{com_port} is not connecting!!!")
+                        print(msg)
+                        return msg
+
+                prefix_cmd += f"  --port {com_port}  "
+                continue
+
+
+            file = request.files.get(item_name)
+            file.save(f"./bin/{file.filename}")
+            bin_addr_name = item_name
+            firmware_bin_cmd += f"  {bin_addr_name}  ./bin/{file.filename}"
+
+        cmd_str = prefix_cmd + suffix_cmd + firmware_bin_cmd
+
         def generate():
-            # 拼接命令
-            com_num = get_last_portName()
-            if (com_num == "null"):
-                yield err_msg("\nCOM is Null\n")
-                return
-
-            command_str = get_command(com_num, ota_data_initial)
+            command_str = cmd_str
             print(command_str)
 
             # 执行外部命令
@@ -143,14 +133,20 @@ if __name__ == "__main__":
                 yield tmp_line
                 sys.stdout.flush()
             
-            print(success_msg("write flash OK, open COM_TOOL..."))
-            yield success_msg("write flash OK, open COM_TOOL...\n")
-
-            print("Finish.")
-            yield "Finish.\n"
+            # 输出的异常检查
+            err_code = p.wait()
+            if err_code:  # 异常情况
+                msg = err_msg( str(p.stderr.read(), "gbk") )
+                print(msg)
+                yield msg
+            else:    # 正常情况
+                msg = success_msg("Flash finish, success!!!")
+                print(msg)
+                yield msg
+            
             print("---------------------------------------------------\n")
 
         return Response(generate(), mimetype='text/plain')
 
-    app.run(debug=True, port=9969, host="0.0.0.0")
+    app.run(debug=True, port=args.port, host="0.0.0.0")
 

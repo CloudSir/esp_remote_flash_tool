@@ -4,24 +4,26 @@ Author: CloudSir
 Date: 2023-10-09 08:20:09
 Copyright: Cloudsir
 LastEditors: Cloudsir
-LastEditTime: 2023-10-16 15:17:19
+LastEditTime: 2023-11-03 09:51:27
 '''
 import requests
 import yaml
 import os
 from termcolor import colored
-
 import argparse  
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('config', type=str, help='config file path')
+parser.add_argument('--config', type=str, required=False, help='config file path')
 
 args = parser.parse_args()  # 获取所有参数
 
 
 def print_err(msg):
     print(colored(msg, "red"))
+
+def print_ok(msg):
+    print(colored(msg, "green"))
 
 def main():
     config_path = ""
@@ -36,32 +38,32 @@ def main():
         
         data = yaml.load(file_,Loader=yaml.FullLoader)
 
-        bootloader_bin_path = data.get("bootloader_bin_path")
-        main_app_bin_path = data.get("main_app_bin_path")
-        partitions_bin_path = data.get("partitions_bin_path")
+        firmware_list = data.get("firmware_list")
+        com_port = data.get("com_port")
+        flash_options = data.get("flash_options")
+        basic_options = data.get("basic_options")
 
-        ota_data_initial_path = data.get("ota_data_initial_path")
+        for firmware_burn_address in firmware_list:
+            firmware_bin = firmware_list.get(firmware_burn_address)
+            
+            
+        print_ok("Start uploading firmware...")
 
-        if not os.path.exists(bootloader_bin_path):
-            print_err("bootloader.bin is not exist, please check config in 'client_config.yaml'.")
-            return
+        post_tables = {}
 
-        if not os.path.exists(main_app_bin_path):
-            print_err("main_app.bin is not exist, please check config in 'client_config.yaml'.")
-            return
+        for firmware_burn_address in firmware_list:
+            firmware_bin = firmware_list.get(firmware_burn_address)
 
-        if not os.path.exists(bootloader_bin_path):
-            print_err("partitions.bin is not exist, please check config in 'client_config.yaml'.")
-            return
+            if not os.path.exists(firmware_bin):
+                print_err(f"\"{firmware_bin}\" is not exist, please check \"firmware_list\" in config file.")
+                return
 
-        files = {
-            'bootloader': open(bootloader_bin_path,'rb'),
-            'main_app':   open(main_app_bin_path,'rb'),
-            'partitions': open(partitions_bin_path,'rb')
-        }
-
-        if ota_data_initial_path and os.path.exists(ota_data_initial_path):
-            files["ota_data_initial"] = open(ota_data_initial_path,'rb')
+            firmware_burn_address = hex(firmware_burn_address)
+            post_tables[firmware_burn_address] = open(firmware_bin,'rb')
+            
+        post_tables["com_port"] = com_port
+        post_tables["flash_options"] = flash_options
+        post_tables["basic_options"] = basic_options
 
         try:
             requests.get(data["server_url"] + "/", timeout=3)
@@ -69,7 +71,17 @@ def main():
             print_err("Server is not running!")
             return
 
-        re = requests.post(data["server_url"] + "/flash", stream=True, files=files)
+        re = requests.post(data["server_url"] + "/flash", stream=True, files=post_tables)
+
+        if re.status_code != 200:
+            print_err("Server error!")
+            return
+        
+        print_ok("Upload firmware success!")
+        print("-----------------------------------------------------------")
+        print_ok("Starting Flash firmwares...\n")
+        
+        
         for chunk in re.iter_lines():    # 按照一行一行的读取
             if chunk:
                 print(chunk.decode("utf-8"))
@@ -77,4 +89,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
